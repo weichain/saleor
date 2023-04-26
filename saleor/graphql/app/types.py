@@ -3,7 +3,7 @@ from typing import List, Union
 import graphene
 
 from ...app import models
-from ...app.types import AppExtensionTarget
+from ...app.types import AppEventType, AppExtensionTarget
 from ...core.exceptions import PermissionDenied
 from ...core.jwt import JWT_THIRDPARTY_ACCESS_TYPE
 from ...permission.auth_filters import AuthorizationFilters
@@ -11,7 +11,11 @@ from ...permission.enums import AppPermission
 from ...permission.utils import message_one_of_permissions_required
 from ..account.utils import is_owner_or_has_one_of_perms
 from ..core import ResolveInfo, SaleorContext
-from ..core.connection import CountableConnection
+from ..core.connection import (
+    CountableConnection,
+    create_connection_slice,
+    filter_connection_queryset,
+)
 from ..core.descriptions import (
     ADDED_IN_31,
     ADDED_IN_35,
@@ -22,7 +26,15 @@ from ..core.descriptions import (
 )
 from ..core.doc_category import DOC_CATEGORY_APPS
 from ..core.federation import federated_entity, resolve_federation_references
-from ..core.types import BaseObjectType, Job, ModelObjectType, NonNullList, Permission
+from ..core.fields import FilterConnectionField
+from ..core.types import (
+    BaseObjectType,
+    FilterInputObjectType,
+    Job,
+    ModelObjectType,
+    NonNullList,
+    Permission,
+)
 from ..core.utils import from_global_id_or_error
 from ..meta.types import ObjectWithMetadata
 from ..utils import format_permissions_for_display, get_user_or_app_from_context
@@ -30,11 +42,13 @@ from ..webhook.enums import WebhookEventTypeAsyncEnum, WebhookEventTypeSyncEnum
 from ..webhook.types import Webhook
 from .dataloaders import AppByIdLoader, AppExtensionByAppIdLoader, app_promise_callback
 from .enums import AppExtensionMountEnum, AppExtensionTargetEnum, AppTypeEnum
+from .filters import AppEventFilter
 from .resolvers import (
     resolve_access_token_for_app,
     resolve_access_token_for_app_extension,
     resolve_app_extension_url,
 )
+from .sorters import AppEventSortingInput
 
 
 def has_required_permission(app: models.App, context: SaleorContext):
@@ -298,6 +312,59 @@ class AppToken(BaseObjectType):
         return root.token_last_4
 
 
+class AppEvent(graphene.Interface):
+    id = graphene.GlobalID(required=True)
+    created_at = graphene.DateTime(required=True)
+    requestor = graphene.Field("saleor.graphql.core.types.user_or_app.UserOrApp")
+
+    @classmethod
+    def resolve_type(cls, instance: models.AppEvent, _info):
+        return APP_EVENTS_MAP.get(instance.type)
+
+    @staticmethod
+    def resolve_requestor(root: models.AppEvent, _info: ResolveInfo):
+        if root.requestor_user_id:
+            return root.requestor_user
+        elif root.requestor_app_id:
+            return root.requestor_app
+        return None
+
+
+class AppEventInstalled(ModelObjectType[models.AppEvent]):
+    class Meta:
+        interfaces = [AppEvent, graphene.relay.Node]
+        model = models.AppEvent
+
+
+class AppEventActivated(ModelObjectType[models.AppEvent]):
+    class Meta:
+        interfaces = [AppEvent, graphene.relay.Node]
+        model = models.AppEvent
+
+
+class AppEventDeactivated(ModelObjectType[models.AppEvent]):
+    class Meta:
+        interfaces = [AppEvent, graphene.relay.Node]
+        model = models.AppEvent
+
+
+APP_EVENTS_MAP = {
+    AppEventType.INSTALLED: AppEventInstalled,
+    AppEventType.ACTIVATED: AppEventActivated,
+    AppEventType.DEACTIVATED: AppEventDeactivated,
+}
+
+
+class AppEventCountableConnection(CountableConnection):
+    class Meta:
+        node = AppEvent
+
+
+class AppEventFilterInput(FilterInputObjectType):
+    class Meta:
+        filterset_class = AppEventFilter
+
+
 @federated_entity("id")
 class App(ModelObjectType[models.App]):
     id = graphene.GlobalID(required=True)
@@ -359,6 +426,11 @@ class App(ModelObjectType[models.App]):
         AppExtension,
         description="App's dashboard extensions." + ADDED_IN_31,
         required=True,
+    )
+    events = FilterConnectionField(
+        AppEventCountableConnection,
+        filter=AppEventFilterInput(description="Filtering options for app events."),
+        sort_by=AppEventSortingInput(description="Sort app events."),
     )
 
     class Meta:
@@ -424,6 +496,12 @@ class App(ModelObjectType[models.App]):
     def resolve_metafields(root: models.App, info: ResolveInfo, app, *, keys=None):
         check_permission_for_access_to_meta(root, info, app)
         return ObjectWithMetadata.resolve_metafields(root, info, keys=keys)
+
+    @staticmethod
+    def resolve_events(root: models.App, info: ResolveInfo, **kwargs):
+        qs = root.events.all()
+        qs = filter_connection_queryset(qs, kwargs)
+        return create_connection_slice(qs, info, kwargs, AppEventCountableConnection)
 
 
 class AppCountableConnection(CountableConnection):
