@@ -9,6 +9,7 @@ from ..core.utils import build_absolute_uri
 from ..permission.enums import get_permission_names
 from ..plugins.manager import PluginsManager
 from ..webhook.models import Webhook, WebhookEvent
+from .events import app_event_installed
 from .manifest_validations import clean_manifest_data
 from .models import App, AppExtension, AppInstallation
 from .types import AppExtensionTarget, AppType
@@ -115,5 +116,6 @@ def install_app(app_installation: AppInstallation, activate: bool = False):
     except requests.RequestException as e:
         app.delete()
         raise e
+    app_event_installed(app, requestor=None)
     PluginsManager(plugins=settings.PLUGINS).app_installed(app)
     return app, token
