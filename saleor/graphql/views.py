@@ -32,7 +32,7 @@ from .utils import format_error, query_fingerprint, query_identifier
 INT_ERROR_MSG = "Int cannot represent non 32-bit signed integer value"
 
 arender = sync_to_async(render, thread_sensitive=False)
-aget_context_value = sync_to_async(get_context_value, thread_sensitive=False)
+aget_context_value = sync_to_async(get_context_value, thread_sensitive=True)
 
 
 def tracing_wrapper(execute, sql, params, many, context):
@@ -317,9 +317,8 @@ class AsyncGraphQLView(View):
                         response = await cache.aget(key)
 
                     if not response:
-                        # TODO Owczar: Should be optimized?
                         async_document_execute = sync_to_async(
-                            document.execute, thread_sensitive=False
+                            document.execute, thread_sensitive=True
                         )
                         response = await async_document_execute(
                             root=self.get_root_value(),
