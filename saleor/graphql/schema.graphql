@@ -344,6 +344,15 @@ type Query {
     """Filtering options for categories."""
     filter: CategoryFilterInput
 
+    """
+    Where filtering options.
+    
+    Added in Saleor 3.14.
+    
+    Note: this API is currently in Feature Preview and can be subject to changes at later point.
+    """
+    where: CategoryWhereInput
+
     """Sort categories."""
     sortBy: CategorySortingInput
 
@@ -397,6 +406,15 @@ type Query {
     """Filtering options for collections."""
     filter: CollectionFilterInput
 
+    """
+    Where filtering options.
+    
+    Added in Saleor 3.14.
+    
+    Note: this API is currently in Feature Preview and can be subject to changes at later point.
+    """
+    where: CollectionWhereInput
+
     """Sort collections."""
     sortBy: CollectionSortingInput
 
@@ -448,8 +466,24 @@ type Query {
     """Filtering options for products."""
     filter: ProductFilterInput
 
+    """
+    Where filtering options.
+    
+    Added in Saleor 3.14.
+    
+    Note: this API is currently in Feature Preview and can be subject to changes at later point.
+    """
+    where: ProductWhereInput
+
     """Sort products."""
     sortBy: ProductOrder
+
+    """
+    Search products.
+    
+    Added in Saleor 3.14.
+    """
+    search: String
 
     """Slug of a channel for which the data should be returned."""
     channel: String
@@ -535,6 +569,15 @@ type Query {
 
     """Filtering options for product variant."""
     filter: ProductVariantFilterInput
+
+    """
+    Where filtering options.
+    
+    Added in Saleor 3.14.
+    
+    Note: this API is currently in Feature Preview and can be subject to changes at later point.
+    """
+    where: ProductVariantWhereInput
 
     """Sort products variants."""
     sortBy: ProductVariantSortingInput
@@ -6367,6 +6410,15 @@ type Category implements Node & ObjectWithMetadata @doc(category: "Products") {
     filter: ProductFilterInput
 
     """
+    Filtering options for products.
+    
+    Added in Saleor 3.14.
+    
+    Note: this API is currently in Feature Preview and can be subject to changes at later point.
+    """
+    where: ProductWhereInput
+
+    """
     Sort products.
     
     Added in Saleor 3.10.
@@ -6574,6 +6626,123 @@ input PriceRangeInput {
 
   """Price less than or equal to."""
   lte: Float
+}
+
+input ProductWhereInput @doc(category: "Products") {
+  metadata: [MetadataFilter!]
+  ids: [ID!]
+
+  """Filter by product name."""
+  name: StringFilterInput
+
+  """Filter by product slug."""
+  slug: StringFilterInput
+
+  """Filter by product type."""
+  productType: GlobalIDFilterInput
+
+  """Filter by product category."""
+  category: GlobalIDFilterInput
+
+  """Filter by collection."""
+  collection: GlobalIDFilterInput
+
+  """Filter by availability for purchase."""
+  isAvailable: Boolean
+
+  """Filter by public visibility."""
+  isPublished: Boolean
+
+  """Filter by visibility on the channel."""
+  isVisibleInListing: Boolean
+
+  """Filter by the publication date."""
+  publishedFrom: DateTime
+
+  """Filter by the date of availability for purchase."""
+  availableFrom: DateTime
+
+  """Filter by product with category assigned."""
+  hasCategory: Boolean
+
+  """Filter by product variant price."""
+  price: DecimalFilterInput
+
+  """Filter by the lowest variant price after discounts."""
+  minimalPrice: DecimalFilterInput
+
+  """Filter by attributes associated with the product."""
+  attributes: [AttributeInput!]
+
+  """Filter by variants having specific stock status."""
+  stockAvailability: StockAvailability
+
+  """Filter by stock of the product variant."""
+  stocks: ProductStockFilterInput
+
+  """Filter on whether product is a gift card or not."""
+  giftCard: Boolean
+
+  """Filter by product with preordered variants."""
+  hasPreorderedVariants: Boolean
+
+  """Filter by when was the most recent update."""
+  updatedAt: DateTimeRangeInput
+
+  """List of conditions that must be met."""
+  AND: [ProductWhereInput!]
+
+  """A list of conditions of which at least one must be met."""
+  OR: [ProductWhereInput!]
+}
+
+"""
+Define the filtering options for foreign key fields.
+
+Added in Saleor 3.14.
+
+Note: this API is currently in Feature Preview and can be subject to changes at later point.
+"""
+input GlobalIDFilterInput {
+  """The value equal to."""
+  eq: ID
+
+  """The value included in."""
+  oneOf: [ID!]
+}
+
+"""
+Define the filtering options for decimal fields.
+
+Added in Saleor 3.14.
+
+Note: this API is currently in Feature Preview and can be subject to changes at later point.
+"""
+input DecimalFilterInput {
+  """The value equal to."""
+  eq: Decimal
+
+  """The value included in."""
+  oneOf: [Decimal!]
+
+  """The value in range."""
+  range: DecimalRangeInput
+}
+
+"""
+Custom Decimal implementation.
+
+Returns Decimal as a float in the API,
+parses float to the Decimal on the way back.
+"""
+scalar Decimal
+
+input DecimalRangeInput {
+  """Decimal value greater than or equal to."""
+  gte: Decimal
+
+  """Decimal value less than or equal to."""
+  lte: Decimal
 }
 
 input ProductOrder @doc(category: "Products") {
@@ -7444,6 +7613,15 @@ type Collection implements Node & ObjectWithMetadata @doc(category: "Products") 
   products(
     """Filtering options for products."""
     filter: ProductFilterInput
+
+    """
+    Filtering options for products.
+    
+    Added in Saleor 3.14.
+    
+    Note: this API is currently in Feature Preview and can be subject to changes at later point.
+    """
+    where: ProductWhereInput
 
     """Sort products."""
     sortBy: ProductOrder
@@ -11823,6 +12001,17 @@ input CategoryFilterInput @doc(category: "Products") {
   slugs: [String!]
 }
 
+input CategoryWhereInput @doc(category: "Products") {
+  metadata: [MetadataFilter!]
+  ids: [ID!]
+
+  """List of conditions that must be met."""
+  AND: [CategoryWhereInput!]
+
+  """A list of conditions of which at least one must be met."""
+  OR: [CategoryWhereInput!]
+}
+
 input CategorySortingInput @doc(category: "Products") {
   """Specifies the direction in which to sort categories."""
   direction: OrderDirection!
@@ -11867,6 +12056,17 @@ input CollectionFilterInput @doc(category: "Products") {
 enum CollectionPublished @doc(category: "Products") {
   PUBLISHED
   HIDDEN
+}
+
+input CollectionWhereInput @doc(category: "Products") {
+  metadata: [MetadataFilter!]
+  ids: [ID!]
+
+  """List of conditions that must be met."""
+  AND: [CollectionWhereInput!]
+
+  """A list of conditions of which at least one must be met."""
+  OR: [CollectionWhereInput!]
 }
 
 input CollectionSortingInput @doc(category: "Products") {
@@ -11958,6 +12158,17 @@ input ProductVariantFilterInput @doc(category: "Products") {
   metadata: [MetadataFilter!]
   isPreorder: Boolean
   updatedAt: DateTimeRangeInput
+}
+
+input ProductVariantWhereInput @doc(category: "Products") {
+  metadata: [MetadataFilter!]
+  ids: [ID!]
+
+  """List of conditions that must be met."""
+  AND: [ProductVariantWhereInput!]
+
+  """A list of conditions of which at least one must be met."""
+  OR: [ProductVariantWhereInput!]
 }
 
 input ProductVariantSortingInput @doc(category: "Products") {
@@ -22460,14 +22671,6 @@ input OrderGrantRefundCreateInput @doc(category: "Orders") {
   """Reason of the granted refund."""
   reason: String
 }
-
-"""
-Custom Decimal implementation.
-
-Returns Decimal as a float in the API,
-parses float to the Decimal on the way back.
-"""
-scalar Decimal
 
 """
 Updates granted refund.
