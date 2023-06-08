@@ -37,11 +37,9 @@ def clean_editor_js(definitions: Optional[Dict], *, to_string: bool = False):
             for item_index, item in enumerate(block["data"]["items"]):
                 if not item:
                     continue
-                new_text = clean_text_data(item)
+                result = dfs(item)
                 if to_string:
-                    plain_text_list.append(strip_tags(new_text))
-                else:
-                    blocks[index]["data"]["items"][item_index] = new_text
+                    plain_text_list.extend(result)
         else:
             text = block["data"].get("text")
             if not text:
@@ -53,6 +51,15 @@ def clean_editor_js(definitions: Optional[Dict], *, to_string: bool = False):
                 blocks[index]["data"]["text"] = new_text
 
     return " ".join(plain_text_list) if to_string else definitions
+
+
+def dfs(node):
+    result = []
+    if 'items' in node:
+        result.append(clean_text_data(node['content']))
+        for child in node['items']:
+            result.extend(dfs(child))
+    return result
 
 
 def clean_text_data(text: str):
