@@ -250,6 +250,7 @@ class User(ModelObjectType):
     last_name = graphene.String(required=True)
     is_staff = graphene.Boolean(required=True)
     is_active = graphene.Boolean(required=True)
+    phone = graphene.String(required=False)
     addresses = NonNullList(
         Address, description="List of all user's addresses.", required=True
     )

@@ -46,6 +46,7 @@ class AccountRegisterInput(AccountBaseInput):
     password = graphene.String(description="Password.", required=True)
     first_name = graphene.String(description="Given name.")
     last_name = graphene.String(description="Family name.")
+    phone = graphene.String(description="Phone number.")
     redirect_url = graphene.String(
         description=(
             "Base of frontend URL that will be needed to create confirmation URL."
