@@ -31,7 +31,7 @@ def build_absolute_uri(location: str, domain: Optional[str] = None) -> str:
     host = domain or Site.objects.get_current().domain
     protocol = "https" if settings.ENABLE_SSL else "http"
     current_uri = "%s://%s" % (protocol, host)
-    location = urljoin(current_uri, location)
+    location = urljoin(current_uri, '.' + location)
     return iri_to_uri(location)
 
 

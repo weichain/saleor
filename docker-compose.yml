@@ -28,7 +28,7 @@ services:
       - JAEGER_AGENT_HOST=jaeger
       - STOREFRONT_URL=http://localhost:3000/
       - DASHBOARD_URL=http://localhost:9000/
-      - ALLOWED_HOSTS=localhost,api
+      - ALLOWED_HOSTS=localhost,api,www.gateway.opn.network,139.59.244.9
 
   db:
     image: library/postgres:11.1-alpine
@@ -53,12 +53,6 @@ services:
       - saleor-backend-tier
     volumes:
       - saleor-redis:/data
-
-  dashboard:
-    image: ghcr.io/saleor/saleor-dashboard:3.13.3
-    ports:
-      - 9000:80
-    restart: unless-stopped
 
   worker:
     build:
